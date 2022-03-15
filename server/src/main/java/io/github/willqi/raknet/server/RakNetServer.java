@@ -45,13 +45,14 @@ public class RakNetServer {
                     @Override
                     protected void channelRead0(ChannelHandlerContext ctx, DatagramPacket message) {
                         byte packetId = message.content().readByte();
+                        System.out.println(packetId);
                         switch (packetId) {
                             case 0x01:
                             case 0x02:
                                 long pingTime = message.content().readLong();
                                 long guid = ThreadLocalRandom.current().nextLong();
                                 byte[] magic = new byte[]{0, -1, -1, 0, -2, -2, -2, -2, -3, -3, -3, -3, 18, 52, 86, 120};
-                                String ad = "MCPE;Dedicated Server;475;1.17;0;10;" + guid + ";Bedrock level";
+                                String ad = "MCPE;Pizza Server;475;1.17;0;10;" + guid + ";Bedrock level";
 
                                 ByteBuf buffer = ByteBufAllocator.DEFAULT.ioBuffer();
                                 buffer.writeByte(0x1c);
@@ -61,6 +62,11 @@ public class RakNetServer {
                                 buffer.writeShort(ad.getBytes(StandardCharsets.UTF_8).length);
                                 buffer.writeBytes(ad.getBytes(StandardCharsets.UTF_8));
                                 ctx.writeAndFlush(new DatagramPacket(buffer, message.sender()));
+                                System.out.println(message.sender());
+                                break;
+                            case 0x05:
+                                System.out.println(message.sender());
+                                System.out.println(123);
                                 break;
                         }
                     }
