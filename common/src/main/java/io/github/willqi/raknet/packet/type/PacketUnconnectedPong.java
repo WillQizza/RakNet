@@ -13,7 +13,7 @@ public class PacketUnconnectedPong extends Packet {
     private long time;
     private long guid;
     private byte[] magic = new byte[16];
-    private String extra;
+    private String extra = "";
 
     @Override
     public byte getId() {

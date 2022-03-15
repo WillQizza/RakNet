@@ -17,6 +17,7 @@ public class PacketUtils {
         {
             this.put(PacketID.UNCONNECTED_PING, PacketHandlerUnconnectedPing.INSTANCE);
             this.put(PacketID.UNCONNECTED_OPEN_SPACE_PING, PacketHandlerUnconnectedPing.INSTANCE);
+            this.put(PacketID.UNCONNECTED_PONG, PacketHandlerUnconnectedPong.INSTANCE);
         }
     };
 
@@ -40,6 +41,7 @@ public class PacketUtils {
             throw new PacketSerializationException("Unable to serialize unknown packet with id: " + packetId);
         }
 
+        buffer.writeByte(packetId);
         handler.serialize(buffer, packet);
     }
 

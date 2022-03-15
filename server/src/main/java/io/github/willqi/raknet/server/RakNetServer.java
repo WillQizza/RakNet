@@ -1,5 +1,12 @@
 package io.github.willqi.raknet.server;
 
+import io.github.willqi.raknet.packet.data.PacketID;
+import io.github.willqi.raknet.packet.exception.PacketDeserializationException;
+import io.github.willqi.raknet.packet.exception.PacketSerializationException;
+import io.github.willqi.raknet.packet.handler.PacketUtils;
+import io.github.willqi.raknet.packet.type.Packet;
+import io.github.willqi.raknet.packet.type.PacketUnconnectedPing;
+import io.github.willqi.raknet.packet.type.PacketUnconnectedPong;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -9,7 +16,6 @@ import io.netty.channel.socket.DatagramPacket;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 
 import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -21,6 +27,8 @@ public class RakNetServer {
     private Channel udpChannel;
     private EventLoopGroup serverEventLoopGroup;
 
+    protected RakNetServerListener listener;
+
 
     public static void main(String[] args) throws InterruptedException {
         RakNetServer rakNetServer = new RakNetServer();
@@ -29,6 +37,10 @@ public class RakNetServer {
         while (true) {
             Thread.sleep(10000);
         }
+    }
+
+    public synchronized void setListener(RakNetServerListener listener) {
+        this.listener = listener;
     }
 
     public void bind(InetSocketAddress socketAddress) {
@@ -44,30 +56,32 @@ public class RakNetServer {
                 .handler(new SimpleChannelInboundHandler<DatagramPacket>() {
                     @Override
                     protected void channelRead0(ChannelHandlerContext ctx, DatagramPacket message) {
-                        byte packetId = message.content().readByte();
-                        System.out.println(packetId);
-                        switch (packetId) {
-                            case 0x01:
-                            case 0x02:
-                                long pingTime = message.content().readLong();
-                                long guid = ThreadLocalRandom.current().nextLong();
-                                byte[] magic = new byte[]{0, -1, -1, 0, -2, -2, -2, -2, -3, -3, -3, -3, 18, 52, 86, 120};
-                                String ad = "MCPE;Pizza Server;475;1.17;0;10;" + guid + ";Bedrock level";
+                        Packet packet;
+                        try {
+                            packet = PacketUtils.deserialize(message.content());
+                        } catch (PacketDeserializationException exception) {
+                            return;
+                        }
+
+                        switch (packet.getId()) {
+                            case PacketID.UNCONNECTED_PING, PacketID.UNCONNECTED_OPEN_SPACE_PING -> {
+                                PacketUnconnectedPing unconnectedPing = (PacketUnconnectedPing) packet;
+
+                                PacketUnconnectedPong unconnectedPong = new PacketUnconnectedPong();
+                                unconnectedPong.setTime(unconnectedPing.getTime());
+                                unconnectedPong.setGuid(ThreadLocalRandom.current().nextLong());
+                                unconnectedPong.setMagic(new byte[]{0, -1, -1, 0, -2, -2, -2, -2, -3, -3, -3, -3, 18, 52, 86, 120});
+                                unconnectedPong.setExtra("MCPE;Pizza Server;475;1.17;0;10;" + unconnectedPong.getGuid() + ";Bedrock level");
 
                                 ByteBuf buffer = ByteBufAllocator.DEFAULT.ioBuffer();
-                                buffer.writeByte(0x1c);
-                                buffer.writeLong(pingTime);
-                                buffer.writeLong(guid);
-                                buffer.writeBytes(magic);
-                                buffer.writeShort(ad.getBytes(StandardCharsets.UTF_8).length);
-                                buffer.writeBytes(ad.getBytes(StandardCharsets.UTF_8));
+                                try {
+                                    PacketUtils.serialize(buffer, unconnectedPong);
+                                } catch (PacketSerializationException exception) {
+                                    return;
+                                }
+
                                 ctx.writeAndFlush(new DatagramPacket(buffer, message.sender()));
-                                System.out.println(message.sender());
-                                break;
-                            case 0x05:
-                                System.out.println(message.sender());
-                                System.out.println(123);
-                                break;
+                            }
                         }
                     }
                 });

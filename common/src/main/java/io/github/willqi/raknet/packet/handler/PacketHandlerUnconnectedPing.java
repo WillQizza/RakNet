@@ -17,8 +17,8 @@ public class PacketHandlerUnconnectedPing implements PacketHandler<PacketUnconne
 
         byte[] magic = new byte[16];
         buffer.readBytes(magic);
-
         pingPacket.setMagic(magic);
+
         pingPacket.setGuid(buffer.readLong());
 
         return pingPacket;
