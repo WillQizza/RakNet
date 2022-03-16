@@ -1,8 +1,12 @@
-package io.github.willqi.raknet.packet.handler;
+package io.github.willqi.raknet.packet.handler.util;
 
 import io.github.willqi.raknet.packet.data.PacketID;
 import io.github.willqi.raknet.packet.exception.PacketDeserializationException;
 import io.github.willqi.raknet.packet.exception.PacketSerializationException;
+import io.github.willqi.raknet.packet.handler.PacketHandler;
+import io.github.willqi.raknet.packet.handler.PacketHandlerOpenConnectionRequest1;
+import io.github.willqi.raknet.packet.handler.PacketHandlerUnconnectedPing;
+import io.github.willqi.raknet.packet.handler.PacketHandlerUnconnectedPong;
 import io.github.willqi.raknet.packet.type.Packet;
 import io.netty.buffer.ByteBuf;
 import lombok.experimental.UtilityClass;
@@ -11,13 +15,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 @UtilityClass
-public class PacketUtils {
+public class PacketHandlerUtils {
 
     private static final Map<Byte, PacketHandler<? extends Packet>> HANDLERS = new HashMap<>() {
         {
             this.put(PacketID.UNCONNECTED_PING, PacketHandlerUnconnectedPing.INSTANCE);
             this.put(PacketID.UNCONNECTED_OPEN_SPACE_PING, PacketHandlerUnconnectedPing.INSTANCE);
             this.put(PacketID.UNCONNECTED_PONG, PacketHandlerUnconnectedPong.INSTANCE);
+            this.put(PacketID.OPEN_CONNECTION_REQUEST1, PacketHandlerOpenConnectionRequest1.INSTANCE);
         }
     };
 
